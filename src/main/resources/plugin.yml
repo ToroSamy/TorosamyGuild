@@ -1,0 +1,10 @@
+name: TorosamyGuild
+version: '1.0-SNAPSHOT'
+main: net.torosamy.torosamyGuild.TorosamyGuild
+api-version: '1.13'
+authors: [ Torosamy,yweiyang ]
+website: https://www.torosamy.net
+depend:
+  - TorosamyCore
+  - PlaceholderAPI
+  - Residence
