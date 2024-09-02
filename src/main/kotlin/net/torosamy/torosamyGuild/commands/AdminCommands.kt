@@ -1,6 +1,7 @@
 package net.torosamy.torosamyGuild.commands
 
 import net.torosamy.torosamyCore.utils.MessageUtil
+import net.torosamy.torosamyGuild.manager.GuildManager
 import net.torosamy.torosamyGuild.utils.ConfigUtil
 import net.torosamy.torosamyGuild.utils.PapiUtil
 import org.bukkit.command.CommandSender
@@ -15,6 +16,7 @@ class AdminCommands {
     fun reloadConfig(sender: CommandSender) {
         ConfigUtil.reloadConfig()
         PapiUtil.reload()
-        sender.sendMessage(MessageUtil.text(ConfigUtil.getLangConfig().reloadMessage))
+        GuildManager.loadGuilds()
+        sender.sendMessage(MessageUtil.text(ConfigUtil.langConfig.reloadMessage))
     }
 }

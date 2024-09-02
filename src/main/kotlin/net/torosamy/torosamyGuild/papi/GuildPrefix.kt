@@ -25,7 +25,7 @@ class GuildPrefix : PlaceholderExpansion() {
         //TODO
 
 
-        return ConfigUtil.getLangConfig().defaultPrefix
+        return ConfigUtil.langConfig.defaultPrefix
 
     }
 
@@ -34,6 +34,6 @@ class GuildPrefix : PlaceholderExpansion() {
 
         //TODO
 
-        return ConfigUtil.getLangConfig().defaultPrefix
+        return ConfigUtil.langConfig.defaultPrefix
     }
 }

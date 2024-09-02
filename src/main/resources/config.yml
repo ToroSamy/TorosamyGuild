@@ -1,0 +1,29 @@
+prefix-max-length: 5
+prefix-min-length: 2
+# 若不开启 只会在stop服务器时保存
+# 定时保存 防止多次读写文件
+auto-save:
+  enabled: true
+  # 多久保存一次
+  seconds: 600
+
+default-guild-config:
+  # 创建日期 用于设置多久可以解散
+  create-time: ""
+  uuid: ""
+  # 公会名
+  prefix: ""
+  # 会长名
+  owner: ""
+  # 领地名
+  res: ""
+  # 公会成员
+  player-list: []
+  color: GOLD
+  apply-players: []
+database:
+  host: "127.0.0.1"
+  port: "3306"
+  database: "torosamy_guild"
+  username: "root"
+  password: "TGCyweiyang0818"

@@ -1,2 +1,6 @@
 default-prefix: "&7&l暂无公会"
 reload-message: "&b[服务器娘]&a插件 &eTorosamyGuild &a重载成功喵~"
+already-has-guild: "&b[服务器娘]&c您目前隶属于公会 &e%guild_prefix% &c无法单独创建公会"
+prefix-too-long: "&b[服务器娘]&c公会名 &e{prefix} &c过长"
+prefix-too-short: "&b[服务器娘]&c公会名 &e{prefix} &c过短"
+create-successful: "&b[服务器娘]&a公会 &e{prefix} &a创建成功!"
