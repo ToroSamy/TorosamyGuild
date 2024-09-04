@@ -1,13 +1,17 @@
+default-color: GOLD
 prefix-max-length: 5
 prefix-min-length: 2
+#单位分钟
+delete-guild-cooldown: 21600
 # 若不开启 只会在stop服务器时保存
 # 定时保存 防止多次读写文件
 auto-save:
   enabled: true
   # 多久保存一次
-  seconds: 600
+  minutes: 30
 
 default-guild-config:
+  enabled: true
   # 创建日期 用于设置多久可以解散
   create-time: ""
   uuid: ""
@@ -22,8 +26,9 @@ default-guild-config:
   color: GOLD
   apply-players: []
 database:
-  host: "127.0.0.1"
+  enabled: false
+  host: "localhost"
   port: "3306"
   database: "torosamy_guild"
   username: "root"
-  password: "TGCyweiyang0818"
+  password: "root"

@@ -6,7 +6,7 @@ enum class Color(val color: String) {
     DARK_GREEN("§2§l"),
     DARK_AQUA("§3§l"),
     DARK_RED("§4§l"),
-    DARK_PUPRPLE("§5§l"),
+    DARK_PURPLE("§5§l"),
     GOLD("§6§l"),
     DARK_GRAY("§7§l"),
     GRAY("§8§l"),

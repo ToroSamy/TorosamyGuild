@@ -10,6 +10,8 @@ class SqlUtil {
         private lateinit var dataSource: HikariDataSource
 
         fun initDatabase(): Unit {
+            if (!ConfigUtil.mainConfig.database.enabled) return
+
             val host = ConfigUtil.mainConfig.database.host;
             val port = ConfigUtil.mainConfig.database.port;
             val username = ConfigUtil.mainConfig.database.username;
