@@ -1,7 +1,6 @@
 package net.torosamy.torosamyGuild.config;
 
 
-import com.bekvon.bukkit.residence.commands.info;
 import net.torosamy.torosamyCore.config.TorosamyConfig;
 
 import java.util.List;
@@ -41,5 +40,6 @@ public class LangConfig extends TorosamyConfig {
     public List<String> guildBasicInfo;
     public String basicInfoDisplay;
     public String memberDonation;
-    public String guildVisit;
+//    public String guildVisit;
+    public String resTpError;
 }

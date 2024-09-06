@@ -15,7 +15,7 @@ public class MainConfig extends TorosamyConfig {
 
     public String guiBasicInfoItem;
 
-    public String guiVisitItem;
+//    public String guiVisitItem;
 
     public String memberDonationItem;
     public Database database = new Database();

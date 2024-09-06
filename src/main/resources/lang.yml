@@ -49,11 +49,16 @@ click-open-menu: "&a点击打开公会面板"
 cancel-apply-successful: "&b[服务器娘]&a成功取消向公会 &e{prefix} &a发起的加入申请"
 guild-gui-title: "公会信息"
 guild-basic-info:
+  - '&6&m----------------'
   - '&6 ▪ &6&l会名&f:{prefix}'
   - '&6 ▪ &6&l会长&f:&e{owner}'
   - '&6 ▪ &6&l等级&f:&e{level}'
   - '&6 ▪ &6&l积分&f:&e{score}'
   - '&6 ▪ &6&l领地&f:&e{res}'
+  - '&6&m----------------'
+  - '&6&l[Click]&e&l左键参观'
+  - '&6&m----------------'
 basic-info-display: "&6基本信息"
-guild-visit: "&6点击参观"
+#guild-visit: "&6点击参观"
 member-donation: "&6成员捐赠"
+res-tp-error: "&b[服务器娘]&c该公会暂未设置领地"

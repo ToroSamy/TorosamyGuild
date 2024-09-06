@@ -10,6 +10,7 @@ import net.torosamy.torosamyGuild.utils.ConfigUtil
 import net.torosamy.torosamyGuild.utils.HoverUtil
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import org.codehaus.plexus.util.StringUtils.isNumeric
 import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.CommandDescription
@@ -81,7 +82,8 @@ class PlayerCommands {
     @Command("guild donate <amount>", requiredSender = Player::class)
     @Permission("torosamyguild.donate")
     @CommandDescription("donate score to guild")
-    fun donateScoreDouble(sender: CommandSender, @Argument("amount") amount: Double) {
+    fun donateScoreDouble(sender: CommandSender, @Argument("amount") amount: String) {
+        if(amount.toDoubleOrNull() == null) return
         val player = sender as Player
         val guild = GuildManager.getGuildByPlayer(player.name)
         if (guild == null) {
@@ -89,41 +91,13 @@ class PlayerCommands {
             return
         }
 
-        if (TorosamyGuild.economy.getBalance(player) < amount) {
+        if (TorosamyGuild.economy.getBalance(player) < amount.toDouble()) {
             player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.scoreNoEnough))
             return
         }
 
-        guild.score += amount
-        guild.playerList[player.name] = guild.playerList[player.name]!! + amount
-        TorosamyGuild.economy.withdrawPlayer(player, amount)
-        player.sendMessage(
-            MessageUtil.text(
-                ConfigUtil.langConfig.donateSuccessful
-                    .replace("{score}", amount.toString())
-                    .replace("{prefix}", guild.prefix)
-            )
-        )
-    }
-
-    @Command("guild donate <amount>", requiredSender = Player::class)
-    @Permission("torosamyguild.donate")
-    @CommandDescription("donate score to guild")
-    fun donateScoreLong(sender: CommandSender, @Argument("amount") amount: Int) {
-        val player = sender as Player
-        val guild = GuildManager.getGuildByPlayer(player.name)
-        if (guild == null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.notFoundGuild))
-            return
-        }
-
-        if (TorosamyGuild.economy.getBalance(player) < amount) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.scoreNoEnough))
-            return
-        }
-
-        guild.score += amount
-        guild.playerList[player.name] = guild.playerList[player.name]!! + amount
+        guild.score += amount.toDouble()
+        guild.playerList[player.name] = guild.playerList[player.name]!! + amount.toDouble()
         TorosamyGuild.economy.withdrawPlayer(player, amount.toDouble())
         player.sendMessage(
             MessageUtil.text(
@@ -133,20 +107,18 @@ class PlayerCommands {
             )
         )
     }
+
+
     @Command("guild info <page>", requiredSender = Player::class)
     @Permission("torosamyguild.info")
     @CommandDescription("show guild info")
     fun showGuildInfo(sender: CommandSender, @Argument("page") page: Int) {
         val player = sender as Player
 
-        val nowTime = System.currentTimeMillis() / 1000
-
-        val time = nowTime - GuildManager.guildRank.first
         //如果现在的时间 和 上次排序的时间 的间距 大于排序冷却
         //则重新进行一次排序
-        if (nowTime - time > ConfigUtil.mainConfig.sortRankCooldown) GuildManager.sortGuilds()
+        if (((System.currentTimeMillis() / 1000) - GuildManager.guildRank.first) > ConfigUtil.mainConfig.sortRankCooldown) GuildManager.sortGuilds()
         val rank: List<Guild> = GuildManager.guildRank.second
-        println(rank.size)
         var truePage = 1
         if(page > 1) truePage = page
         val startIndex = (truePage - 1) * ConfigUtil.mainConfig.maxPageShow

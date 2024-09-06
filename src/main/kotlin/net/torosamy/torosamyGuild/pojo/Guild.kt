@@ -54,13 +54,13 @@ class Guild private constructor(
             TorosamyGuild.plugin.dataFolder.path + File.separator + "Guilds","${uuid}.yml")
     }
     //秒
-    fun getPlayTimeMean():Double {
+    private fun getPlayTimeMean():Double {
         var result = 0.0
         playerList.keys.forEach{ result += Bukkit.getOfflinePlayer(it).getStatistic(Statistic.PLAY_ONE_MINUTE) / 20 }
         return result / playerList.size
     }
 
-    fun getPlayTimeVariance(mean: Double):Double {
+    private fun getPlayTimeVariance(mean: Double):Double {
         var result = 0.0
         playerList.keys.forEach {result +=
             (Bukkit.getOfflinePlayer(it).getStatistic(Statistic.PLAY_ONE_MINUTE) / 20 - mean)
@@ -72,17 +72,15 @@ class Guild private constructor(
 
     fun getLevel() : Long{
         val mean = getPlayTimeMean()
-        val variance = getPlayTimeVariance(mean)
 
-        val k = mean / 60.0
-        val v = variance / 3600.0
 
-        var result = score
-        if(k > 1) result *= k
-        if(v > 0.5) result /= v
+        val hours = mean / 60.0 / 60.0
+        val mins = getPlayTimeVariance(mean) / 3600.0
+        var result = score / 1000
+        if(hours > 1) result *= hours
+        if(mins > 0.5) result /= mins
 
-        if(result > 1000) return (result / 1000.0).toLong()
-        return 0
+        return result.toLong()
     }
 
     companion object {

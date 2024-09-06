@@ -25,9 +25,9 @@ auto-save:
 # 基本信息展示的材质
 gui-basic-info-item: NETHER_STAR
 # 领地传送的材质
-gui-visit-item: BEACON
+#gui-visit-item: BEACON
 # 成员捐赠的材质
-member-donation-item: CHEST
+member-donation-item: BEACON
 default-guild-config:
   score: 0.0
   enabled: true

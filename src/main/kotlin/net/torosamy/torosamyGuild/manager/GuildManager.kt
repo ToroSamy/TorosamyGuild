@@ -88,8 +88,7 @@ class GuildManager {
 
         fun sortGuilds() {
             val time: Long = (System.currentTimeMillis() / 1000)
-            val list: List<Guild> = guilds.values.sortedBy { it.getLevel() }
-            println(list.size)
+            val list: List<Guild> = guilds.values.sortedByDescending { it.getLevel() }
             guildRank = Pair(time, list)
         }
 

@@ -30,15 +30,15 @@ class GuildGUI(val guild: Guild) {
         basicInfoMeta.setDisplayName(MessageUtil.text(ConfigUtil.langConfig.basicInfoDisplay))
         basicInfoMeta.lore = ConfigUtil.langConfig.guildBasicInfo.map { MessageUtil.text(setHolder(it)) }
         basicInfoItem.setItemMeta(basicInfoMeta)
-        inventory.setItem(0, basicInfoItem)
+        inventory.setItem(4, basicInfoItem)
 
-        val resTpItem = ItemStack(Material.valueOf(ConfigUtil.mainConfig.guiVisitItem))
-        val resTpMeta = resTpItem.itemMeta
-        resTpMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES)
-        resTpMeta.attributeModifiers = ImmutableMultimap.of()
-        resTpMeta.setDisplayName(MessageUtil.text(ConfigUtil.langConfig.guildVisit))
-        resTpItem.setItemMeta(resTpMeta)
-        inventory.setItem(8, resTpItem)
+//        val resTpItem = ItemStack(Material.valueOf(ConfigUtil.mainConfig.guiVisitItem))
+//        val resTpMeta = resTpItem.itemMeta
+//        resTpMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES)
+//        resTpMeta.attributeModifiers = ImmutableMultimap.of()
+//        resTpMeta.setDisplayName(MessageUtil.text(ConfigUtil.langConfig.guildVisit))
+//        resTpItem.setItemMeta(resTpMeta)
+//        inventory.setItem(8, resTpItem)
 
         val memberItem = ItemStack(Material.valueOf(ConfigUtil.mainConfig.memberDonationItem))
         val memberMeta = memberItem.itemMeta
@@ -49,7 +49,7 @@ class GuildGUI(val guild: Guild) {
         for (entry in guild.playerList) { list.add(MessageUtil.text(" - &6${entry.key}&f: &e${entry.value}")) }
         memberMeta.lore = list
         memberItem.setItemMeta(memberMeta)
-        inventory.setItem(7, memberItem)
+        inventory.setItem(8, memberItem)
 
         player.openInventory(inventory)
     }
