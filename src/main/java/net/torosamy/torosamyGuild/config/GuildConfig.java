@@ -5,6 +5,7 @@ import java.util.List;
 
 public class GuildConfig extends TorosamyConfig {
     public Boolean enabled;
+    public Double score;
     public String uuid;
     public String prefix;
     public String owner;

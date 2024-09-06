@@ -7,4 +7,5 @@ website: https://www.torosamy.net
 depend:
   - TorosamyCore
   - PlaceholderAPI
-#  - Residence
+  - Residence
+  - Vault

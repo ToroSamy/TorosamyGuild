@@ -1,8 +1,20 @@
 default-color: GOLD
 prefix-max-length: 5
 prefix-min-length: 2
+
 #单位分钟
 delete-guild-cooldown: 21600
+
+#玩家在线多少小时才能创建公会
+create-time-condition: 72
+
+#一页展示多少个公会
+max-page-show: 5
+
+#展示公会时 多久才排一次序 单位s
+sort-rank-cooldown: 600
+
+
 # 若不开启 只会在stop服务器时保存
 # 定时保存 防止多次读写文件
 auto-save:
@@ -10,7 +22,14 @@ auto-save:
   # 多久保存一次
   minutes: 30
 
+# 基本信息展示的材质
+gui-basic-info-item: NETHER_STAR
+# 领地传送的材质
+gui-visit-item: BEACON
+# 成员捐赠的材质
+member-donation-item: CHEST
 default-guild-config:
+  score: 0.0
   enabled: true
   # 创建日期 用于设置多久可以解散
   create-time: ""

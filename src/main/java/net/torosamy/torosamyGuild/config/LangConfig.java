@@ -1,5 +1,7 @@
 package net.torosamy.torosamyGuild.config;
 
+
+import com.bekvon.bukkit.residence.commands.info;
 import net.torosamy.torosamyCore.config.TorosamyConfig;
 
 import java.util.List;
@@ -27,4 +29,17 @@ public class LangConfig extends TorosamyConfig {
     public String changeColorSuccessful;
     public List<String> commandHelp;
     public String colorNotFound;
+    public String createTimeCondition;
+    public String kickSuccessful;
+    public String noApplyToShow;
+    public String applyList;
+    public String scoreNoEnough;
+    public String donateSuccessful;
+    public String clickOpenMenu;
+    public String cancelApplySuccessful;
+    public String guildGuiTitle;
+    public List<String> guildBasicInfo;
+    public String basicInfoDisplay;
+    public String memberDonation;
+    public String guildVisit;
 }

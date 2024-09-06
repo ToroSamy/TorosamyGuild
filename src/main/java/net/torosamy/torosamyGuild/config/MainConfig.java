@@ -1,4 +1,6 @@
 package net.torosamy.torosamyGuild.config;
+import com.bekvon.bukkit.residence.commands.info;
+import com.bekvon.bukkit.residence.commands.show;
 import net.torosamy.torosamyCore.config.TorosamyConfig;
 
 
@@ -7,6 +9,15 @@ public class MainConfig extends TorosamyConfig {
     public int prefixMaxLength;
     public int prefixMinLength;
     public int deleteGuildCooldown;
+    public int createTimeCondition;
+    public int maxPageShow;
+    public int sortRankCooldown;
+
+    public String guiBasicInfoItem;
+
+    public String guiVisitItem;
+
+    public String memberDonationItem;
     public Database database = new Database();
     public class Database extends TorosamyConfig {
         public Boolean enabled;

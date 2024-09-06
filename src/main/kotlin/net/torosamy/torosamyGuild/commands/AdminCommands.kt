@@ -39,4 +39,15 @@ class AdminCommands {
         guild.saveConfig()
         GuildManager.deleteGuild(guild)
     }
+
+
+    @Command("guild save")
+    @Permission("torosamyguild.admin")
+    @CommandDescription("save data")
+    fun saveData(sender: CommandSender) {
+        GuildManager.saveGuilds()
+    }
+
+
+
 }

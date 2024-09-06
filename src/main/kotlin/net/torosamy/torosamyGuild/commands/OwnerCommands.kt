@@ -1,6 +1,6 @@
 package net.torosamy.torosamyGuild.commands
 
-import me.clip.placeholderapi.PlaceholderAPI
+
 import net.torosamy.torosamyCore.manager.ConfigManager
 import net.torosamy.torosamyCore.utils.MessageUtil
 import net.torosamy.torosamyGuild.TorosamyGuild
@@ -8,6 +8,7 @@ import net.torosamy.torosamyGuild.manager.GuildManager
 import net.torosamy.torosamyGuild.pojo.Guild
 import net.torosamy.torosamyGuild.type.Color
 import net.torosamy.torosamyGuild.utils.ConfigUtil
+import org.bukkit.Statistic
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.incendo.cloud.annotations.Argument
@@ -36,12 +37,25 @@ class OwnerCommands {
             player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.prefixTooLong.replace("{prefix}", prefix)))
             return
         }
+
+
+        val second = player.getStatistic(Statistic.PLAY_ONE_MINUTE) / 20
+        val condition = ConfigUtil.mainConfig.createTimeCondition  * 60 * 60
+        if(second < condition) {
+            player.sendMessage(MessageUtil.text(
+                ConfigUtil.langConfig.createTimeCondition)
+                .replace("{time}", ConfigUtil.mainConfig.createTimeCondition.toString())
+            )
+            return
+        }
+
         val defaultColor = Color.valueOf(ConfigUtil.mainConfig.defaultColor)
         //内存区添加公会
         val guild = Guild.createGuild(player, prefix, defaultColor)
+
         GuildManager.addGuild(guild)
         //IO公会保存
-        val config = Guild.createConfig(guild)
+        val config = Guild.getConfigByGuild(guild)
         ConfigManager.loadYaml(TorosamyGuild.plugin, "Guilds", "${guild.uuid}.yml",config)
         //发送消息
         player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.createSuccessful.replace("{prefix}", prefix)))
@@ -85,7 +99,7 @@ class OwnerCommands {
         }
 
         GuildManager.deleteApplyByPlayer(applyPlayer)
-        guild.playerList.add(applyPlayer)
+        guild.playerList[applyPlayer] = 0.0
         player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.acceptApply.replace("{player}",applyPlayer)))
     }
 
@@ -126,7 +140,7 @@ class OwnerCommands {
         }
         //TODO 转交领地管理权限
         guild.playerList.remove(player)
-        guild.playerList.add(owner.name)
+        guild.playerList[owner.name] = 0.0
         guild.owner = player
         owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.giveGuildSuccessful))
     }
@@ -178,7 +192,47 @@ class OwnerCommands {
         guild.color = color
 
 
-        player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.changeColorSuccessful.replace("{prefix}", guild.prefix)
-        ))
+        player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.changeColorSuccessful.replace("{prefix}", guild.prefix)))
+    }
+
+
+    @Command("guild kick <player>", requiredSender = Player::class)
+    @Permission("torosamyguild.kick")
+    @CommandDescription("kick a player")
+    fun kickPlayer(sender: CommandSender, @Argument("player") player: String) {
+        val owner = sender as Player
+        val guild = GuildManager.isOwner(owner)
+        if (guild == null) {
+            owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildOwner))
+            return
+        }
+
+        if (!guild.playerList.contains(player)) {
+            owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildMember.replace("{player}", player)))
+            return
+        }
+
+        guild.playerList.remove(player)
+        owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.kickSuccessful.replace("{player}", player)))
+    }
+
+
+    @Command("guild check", requiredSender = Player::class)
+    @Permission("torosamyguild.check")
+    @CommandDescription("check apply")
+    fun checkApply(sender: CommandSender) {
+        val owner = sender as Player
+        val guild = GuildManager.isOwner(owner)
+        if (guild == null) {
+            owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildOwner))
+            return
+        }
+
+        if (guild.applyPlayers.size == 0) {
+            owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.noApplyToShow))
+            return
+        }
+        sender.sendMessage(MessageUtil.text(ConfigUtil.langConfig.applyList))
+        guild.applyPlayers.forEach { player -> owner.sendMessage(" - $player")}
     }
 }

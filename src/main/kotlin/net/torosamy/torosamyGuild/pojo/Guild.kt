@@ -5,10 +5,12 @@ import net.torosamy.torosamyGuild.TorosamyGuild
 import net.torosamy.torosamyGuild.config.GuildConfig
 import net.torosamy.torosamyGuild.type.Color
 import org.bukkit.Bukkit
+import org.bukkit.Statistic
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
 import java.io.File
 import java.util.UUID
+import kotlin.math.pow
 
 
 class Guild private constructor(
@@ -18,16 +20,19 @@ class Guild private constructor(
     var owner: String,
     var residence: String?,
     val createTime: Long,
-    var color: Color) {
-    val playerList: HashSet<String> = HashSet()
+    var color: Color
+) {
+    val playerList: HashMap<String, Double> = HashMap()
     val applyPlayers: HashSet<String> = HashSet()
-
+    var score: Double = 0.0
+    //by lazy第一次访问后初始化
+    val guildGUI: GuildGUI by lazy { GuildGUI(this) }
     /**
      * 从成员列表获取对应的玩家
      */
     fun getPlayer(name: String): String? {
         if (playerList.isEmpty()) return null
-        return playerList.find { it.equals(name, false) }
+        return playerList.keys.find {it.equals(name,false) }
     }
 
     fun isOwner(player: Player): Guild? {
@@ -37,7 +42,7 @@ class Guild private constructor(
 
     fun getDisplayByPlayer(player: String): String? {
         if(owner == player) { return color.color + prefix }
-        playerList.forEach{name -> if(name == player) { return color.color + prefix } }
+        playerList.keys.forEach{name -> if(name == player) { return color.color + prefix } }
         return null
     }
 
@@ -47,6 +52,37 @@ class Guild private constructor(
             YamlConfiguration(),
             "",
             TorosamyGuild.plugin.dataFolder.path + File.separator + "Guilds","${uuid}.yml")
+    }
+    //秒
+    fun getPlayTimeMean():Double {
+        var result = 0.0
+        playerList.keys.forEach{ result += Bukkit.getOfflinePlayer(it).getStatistic(Statistic.PLAY_ONE_MINUTE) / 20 }
+        return result / playerList.size
+    }
+
+    fun getPlayTimeVariance(mean: Double):Double {
+        var result = 0.0
+        playerList.keys.forEach {result +=
+            (Bukkit.getOfflinePlayer(it).getStatistic(Statistic.PLAY_ONE_MINUTE) / 20 - mean)
+                .pow(2.0)
+        }
+
+        return result / playerList.size
+    }
+
+    fun getLevel() : Long{
+        val mean = getPlayTimeMean()
+        val variance = getPlayTimeVariance(mean)
+
+        val k = mean / 60.0
+        val v = variance / 3600.0
+
+        var result = score
+        if(k > 1) result *= k
+        if(v > 0.5) result /= v
+
+        if(result > 1000) return (result / 1000.0).toLong()
+        return 0
     }
 
     companion object {
@@ -61,12 +97,15 @@ class Guild private constructor(
 
             val guild = Guild(enabled,uuid, prefix, owner, residence, createTime, color)
 
+            guild.score = config.score
+
             for (applyPlayer in config.applyPlayers) {
                 guild.applyPlayers.add(applyPlayer)
             }
 
             for (playerStr in config.playerList) {
-                guild.playerList.add(playerStr)
+                val split = playerStr.split(":")
+                guild.playerList[split[0]] = split[1].toDouble()
             }
             return guild
         }
@@ -80,9 +119,9 @@ class Guild private constructor(
             guildConfig.res = guild.residence
             guildConfig.createTime = guild.createTime.toString()
             guildConfig.color = guild.color.toString()
-
+            guildConfig.score = guild.score
             val playerList = ArrayList<String>()
-            guild.playerList.forEach { playerList.add(it) }
+            guild.playerList.forEach { playerList.add("${it.key}:${it.value}") }
 
             val applyPlayers = ArrayList<String>()
             guild.applyPlayers.forEach { applyPlayers.add(it) }
@@ -92,37 +131,14 @@ class Guild private constructor(
             return guildConfig
         }
 
-
-        fun createConfig(guild: Guild): GuildConfig {
-            val guildConfig = GuildConfig()
-            guildConfig.enabled = guild.enabled
-            guildConfig.uuid = guild.uuid
-            guildConfig.prefix = guild.prefix
-            guildConfig.owner = guild.owner
-            guildConfig.res = guild.residence;
-            guildConfig.createTime = guild.createTime.toString()
-            guildConfig.color = guild.color.toString()
-            //将HashSet转为List储存到Config中
-            val playerList = ArrayList<String>()
-            for (player in guild.playerList) {
-                playerList.add(player)
-            }
-
-            val applyPlayers = ArrayList<String>()
-            for (applyPlayer in guild.applyPlayers) {
-                applyPlayers.add(applyPlayer)
-            }
-
-            guildConfig.playerList = playerList
-            guildConfig.applyPlayers = applyPlayers
-
-            return guildConfig
-        }
-
         fun createGuild(owner: Player, prefix: String, color: Color): Guild {
             val uuid = UUID.randomUUID().toString()
             val createTime: Long = System.currentTimeMillis()
-            return Guild(true, uuid, prefix, owner.name, null, createTime, color)
+            val guild = Guild(true, uuid, prefix, owner.name, null, createTime, color)
+            guild.playerList[owner.name] = 0.0
+            return guild
         }
+
+
     }
 }

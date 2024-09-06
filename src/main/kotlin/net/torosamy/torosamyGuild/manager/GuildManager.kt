@@ -13,27 +13,28 @@ import org.bukkit.entity.Player
 class GuildManager {
     companion object {
         val guilds = HashMap<String, Guild>()
+        var guildRank = Pair(0L, listOf<Guild>())
 
         fun loadGuilds() {
             guilds.clear()
             loadGuildData(ConfigManager.loadYamls(TorosamyGuild.plugin, "Guilds", ""))
-            Bukkit.getConsoleSender().sendMessage(MessageUtil.text("&a[服务器娘]&a插件 &eTorosamyGuild &a成功加载 &e${guilds.size} &a个公会喵~"))
+            Bukkit.getConsoleSender()
+                .sendMessage(MessageUtil.text("&a[服务器娘]&a插件 &eTorosamyGuild &a成功加载 &e${guilds.size} &a个公会喵~"))
         }
 
         fun saveGuilds() {
-            guilds.values.forEach (Guild::saveConfig)
+            guilds.values.forEach(Guild::saveConfig)
         }
 
         private fun loadGuildData(guildYmls: HashMap<String, ConfigurationSection>) {
             for (guildYml in guildYmls.values) {
                 val guildConfig = GuildConfig()
-                ConfigManager.loadData(guildConfig,guildYml as YamlConfiguration , "")
+                ConfigManager.loadData(guildConfig, guildYml as YamlConfiguration, "")
                 //读取config后 如果未启用则跳过管理
-                if(!guildConfig.enabled) continue
+                if (!guildConfig.enabled) continue
                 guilds[guildConfig.uuid] = Guild.getGuildByConfig(guildConfig)
             }
         }
-
 
 
         /**
@@ -54,9 +55,9 @@ class GuildManager {
             return null
         }
 
-        fun getDisplayByPlayer(player: String) : String? {
+        fun getDisplayByPlayer(player: String): String? {
             for (guild in guilds.values) {
-                return guild.getDisplayByPlayer(player)?:continue
+                return guild.getDisplayByPlayer(player) ?: continue
             }
             return null;
         }
@@ -72,16 +73,24 @@ class GuildManager {
         /**
          * 如果是公会主人则返回所在的公会
          */
-        fun isOwner(player: Player) : Guild? {
+        fun isOwner(player: Player): Guild? {
             for (guild in guilds.values) {
-                if(player.name == guild.owner) return guild
+                if (guild.isOwner(player) != null) return guild
                 continue
             }
             return null;
         }
 
         fun deleteApplyByPlayer(player: String) {
-            guilds.values.forEach{it.applyPlayers.remove(player)}
+            guilds.values.forEach { it.applyPlayers.remove(player) }
+        }
+
+
+        fun sortGuilds() {
+            val time: Long = (System.currentTimeMillis() / 1000)
+            val list: List<Guild> = guilds.values.sortedBy { it.getLevel() }
+            println(list.size)
+            guildRank = Pair(time, list)
         }
 
     }
