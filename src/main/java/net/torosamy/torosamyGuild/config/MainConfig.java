@@ -12,7 +12,7 @@ public class MainConfig extends TorosamyConfig {
     public int createTimeCondition;
     public int maxPageShow;
     public int sortRankCooldown;
-
+    public Double resCostBlock;
     public String guiBasicInfoItem;
 
 //    public String guiVisitItem;

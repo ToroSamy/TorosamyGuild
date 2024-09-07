@@ -41,5 +41,9 @@ public class LangConfig extends TorosamyConfig {
     public String basicInfoDisplay;
     public String memberDonation;
 //    public String guildVisit;
-    public String resTpError;
+    public String notFoundRes;
+    public String alreadyHasRes;
+    public String createResSuccessful;
+    public String guildScoreNoEnough;
+    public String expandResSuccessful;
 }

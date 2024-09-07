@@ -21,13 +21,13 @@ class ClickGuiListener : Listener {
 
             if (event.rawSlot != 4) continue
 
-            if(guild.residence != null) {
+            if(guild.residence.isNotEmpty()) {
                 Bukkit.dispatchCommand(player,"res tp ${guild.residence}")
                 player.closeInventory()
                 return
             }
 
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.resTpError))
+            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.notFoundRes))
             player.closeInventory()
         }
     }

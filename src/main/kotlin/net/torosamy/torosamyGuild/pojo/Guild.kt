@@ -18,7 +18,7 @@ class Guild private constructor(
     val uuid: String,
     var prefix: String,
     var owner: String,
-    var residence: String?,
+    var residence: String,
     val createTime: Long,
     var color: Color
 ) {
@@ -132,7 +132,7 @@ class Guild private constructor(
         fun createGuild(owner: Player, prefix: String, color: Color): Guild {
             val uuid = UUID.randomUUID().toString()
             val createTime: Long = System.currentTimeMillis()
-            val guild = Guild(true, uuid, prefix, owner.name, null, createTime, color)
+            val guild = Guild(true, uuid, prefix, owner.name, "", createTime, color)
             guild.playerList[owner.name] = 0.0
             return guild
         }

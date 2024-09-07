@@ -10,7 +10,6 @@ import net.torosamy.torosamyGuild.utils.ConfigUtil
 import net.torosamy.torosamyGuild.utils.HoverUtil
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import org.codehaus.plexus.util.StringUtils.isNumeric
 import org.incendo.cloud.annotations.Argument
 import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.CommandDescription
@@ -158,7 +157,7 @@ class PlayerCommands {
 
         val guild = GuildManager.getGuildByPlayer(player.name)
         if (guild != null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.alreadyHasGuild))
+            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.alreadyHasGuild.replace("{prefix}",guild.prefix)))
             for (value in GuildManager.guilds.values) {
                 value.applyPlayers.remove(player.name)
             }
@@ -199,23 +198,5 @@ class PlayerCommands {
         player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.cancelApplySuccessful.replace("{prefix}", prefix)))
     }
 
-    @Command("test", requiredSender = Player::class)
-    @Permission("torosamyguild.test")
-    @CommandDescription("donate score to guild")
-    fun test(sender: CommandSender) {
-        val guild = GuildManager.getGuildByPrefix("云间幽谷")
-        if (guild == null) {
-            sender.sendMessage(MessageUtil.text(ConfigUtil.langConfig.notFoundGuild))
-            return
-        }
-        //TODO
-        println(guild.owner)
-        guild.playerList.forEach(::println)
-        guild.applyPlayers.forEach(::println)
-        println(guild.color)
-        println(guild.prefix)
-        println(guild.score)
-        println(guild.getLevel())
 
-    }
 }

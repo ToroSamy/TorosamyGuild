@@ -13,7 +13,8 @@ max-page-show: 5
 
 #展示公会时 多久才排一次序 单位s
 sort-rank-cooldown: 600
-
+#公会圈地价格
+res-cost-block: 0.01
 
 # 若不开启 只会在stop服务器时保存
 # 定时保存 防止多次读写文件

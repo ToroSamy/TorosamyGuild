@@ -8,6 +8,7 @@ import net.torosamy.torosamyGuild.manager.GuildManager
 import net.torosamy.torosamyGuild.pojo.Guild
 import net.torosamy.torosamyGuild.type.Color
 import net.torosamy.torosamyGuild.utils.ConfigUtil
+import org.bukkit.Bukkit
 import org.bukkit.Statistic
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -138,10 +139,12 @@ class OwnerCommands {
             owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildMember.replace("{player}", player)))
             return
         }
-        //TODO 转交领地管理权限
         guild.playerList.remove(player)
         guild.playerList[owner.name] = 0.0
+
+        Bukkit.dispatchCommand(TorosamyGuild.plugin.server.consoleSender,"resadmin pset ${owner.name} ${owner.name} admin false")
         guild.owner = player
+        Bukkit.dispatchCommand(TorosamyGuild.plugin.server.consoleSender,"resadmin pset ${player} ${player} admin true")
         owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.giveGuildSuccessful))
     }
 
