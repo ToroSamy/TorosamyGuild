@@ -1,7 +1,8 @@
 package net.torosamy.torosamyGuild.listener
 
 import net.torosamy.torosamyCore.utils.MessageUtil
-import net.torosamy.torosamyGuild.manager.GuildManager
+import net.torosamy.torosamyGuild.api.TorosamyGuildAPI
+import net.torosamy.torosamyGuild.pojo.GuildGUIHolder
 import net.torosamy.torosamyGuild.utils.ConfigUtil
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
@@ -14,21 +15,27 @@ class ClickGuiListener : Listener {
     fun onCancel(event: InventoryClickEvent) {
         val player = event.whoClicked as Player
 
-        for (guild in GuildManager.guilds.values) {
-            if (event.inventory != guild.guildGUI.inventory) continue
-
-            event.isCancelled = true
-
-            if (event.rawSlot != 4) continue
-
-            if(guild.residence.isNotEmpty()) {
-                Bukkit.dispatchCommand(player,"res tp ${guild.residence}")
-                player.closeInventory()
-                return
-            }
-
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.notFoundRes))
-            player.closeInventory()
+        if (!GuildGUIHolder.isGuildGUI(event.inventory)) {
+            return
         }
+
+        event.isCancelled = true
+
+        if (event.rawSlot != 4) {
+            return
+        }
+
+        val prefix = (event.inventory.holder as GuildGUIHolder).prefix
+
+        val guild = TorosamyGuildAPI.getGuild(prefix) ?: return
+
+        if (guild.residence.isEmpty()) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundRes))
+            player.closeInventory()
+            return
+        }
+
+        Bukkit.dispatchCommand(player,"res tp ${guild.residence}")
+        player.closeInventory()
     }
 }

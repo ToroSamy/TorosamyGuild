@@ -1,4 +1,4 @@
-package net.torosamy.torosamyGuild.pojo
+package net.torosamy.torosamyGuild.mysql
 
 import java.sql.ResultSet
 

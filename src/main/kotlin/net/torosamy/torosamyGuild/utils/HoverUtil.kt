@@ -11,9 +11,9 @@ import org.bukkit.entity.Player
 class HoverUtil {
     companion object {
         fun createCommandHover(text: String, command: String, hover: String): TextComponent {
-            val message = TextComponent(MessageUtil.text(text))
+            val message = TextComponent(MessageUtil.format(text))
             message.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, command)
-            message.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, ComponentBuilder(MessageUtil.text(hover)).create())
+            message.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, ComponentBuilder(MessageUtil.format(hover)).create())
             return message
         }
 

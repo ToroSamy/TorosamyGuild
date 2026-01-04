@@ -1,12 +1,11 @@
 package net.torosamy.torosamyGuild.config;
 
 
-import net.torosamy.torosamyCore.config.TorosamyConfig;
+import net.torosamy.torosamyCore.config.IConfigManage;
 
 import java.util.List;
 
-public class LangConfig extends TorosamyConfig {
-    public String defaultPrefix;
+public class LangConfig implements IConfigManage {
     public String reloadMessage;
     public String alreadyHasGuild;
     public String prefixTooLong;
@@ -34,16 +33,27 @@ public class LangConfig extends TorosamyConfig {
     public String applyList;
     public String scoreNoEnough;
     public String donateSuccessful;
-    public String clickOpenMenu;
+    public String pageError;
     public String cancelApplySuccessful;
-    public String guildGuiTitle;
+    public String topUpdating;
     public List<String> guildBasicInfo;
+    public String clickOpenMenu;
+    public List<String> topFooter;
+    public List<String> topHeader;
     public String basicInfoDisplay;
     public String memberDonation;
-//    public String guildVisit;
+    public String loadGuildsMessage;
+    public String interactionSelfError;
     public String notFoundRes;
     public String alreadyHasRes;
     public String createResSuccessful;
     public String guildScoreNoEnough;
     public String expandResSuccessful;
+    public String noResHolder;
+    public String guildCreateFail;
+    public String autoRemoveRes;
+    public String resNotSelect;
+    public String giveResFail;
+    public String amountError;
+    public String expandRemind;
 }

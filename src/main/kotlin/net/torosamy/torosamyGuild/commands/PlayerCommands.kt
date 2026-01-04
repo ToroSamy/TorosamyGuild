@@ -1,10 +1,11 @@
 package net.torosamy.torosamyGuild.commands
 
 
-import me.clip.placeholderapi.PlaceholderAPI
+import net.milkbowl.vault.economy.EconomyResponse
+import net.torosamy.torosamyCore.api.TorosamyCoreAPI
 import net.torosamy.torosamyCore.utils.MessageUtil
 import net.torosamy.torosamyGuild.TorosamyGuild
-import net.torosamy.torosamyGuild.manager.GuildManager
+import net.torosamy.torosamyGuild.api.TorosamyGuildAPI
 import net.torosamy.torosamyGuild.pojo.Guild
 import net.torosamy.torosamyGuild.utils.ConfigUtil
 import net.torosamy.torosamyGuild.utils.HoverUtil
@@ -16,187 +17,247 @@ import org.incendo.cloud.annotations.CommandDescription
 import org.incendo.cloud.annotations.Permission
 
 class PlayerCommands {
-
-
-    @Command("guild join <prefix>", requiredSender = Player::class)
+    @Command("guild join <name>", requiredSender = Player::class)
     @Permission("torosamyguild.join")
-    @CommandDescription("join guild")
-    fun applyJoinGuild(sender: CommandSender, @Argument("prefix") prefix: String) {
+    @CommandDescription("申请加入公会")
+    fun applyJoinGuild(sender: CommandSender, @Argument("name") name: String) {
         val player = sender as Player
-        if (GuildManager.getGuildByPlayer(player.name) != null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.alreadyHasGuild.replace("{prefix}", prefix)))
+        
+        val playerGuild = TorosamyGuildAPI.getGuild(player)
+        
+        if (playerGuild != null) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.alreadyHasGuild.replace("{prefix}", playerGuild.getPrefix())))
             return
         }
 
-        val guild = GuildManager.getGuildByPrefix(prefix)
+        val guild = TorosamyGuildAPI.getGuild(name)
+        
         if (guild == null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.notFoundGuild))
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
 
-        if (guild.applyPlayers.contains(player.name)) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.applyRepeat))
+        if (guild.applied(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.applyRepeat))
             return
         }
 
-        guild.applyPlayers.add(player.name)
-        player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.applySuccessful.replace("{prefix}", guild.prefix)))
+        guild.apply(player.name)
+        player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.applySuccessful.replace("{prefix}", guild.getPrefix())))
     }
 
 
     @Command("guild quit", requiredSender = Player::class)
     @Permission("torosamyguild.quit")
-    @CommandDescription("quit guild")
+    @CommandDescription("退出公会")
     fun quitGuild(sender: CommandSender) {
         val player = sender as Player
-        val guild = GuildManager.getGuildByPlayer(player.name)
+        
+        val guild = TorosamyGuildAPI.getGuild(player)
+        
         if (guild == null) {
-            player.sendMessage(
-                MessageUtil.text(
-                    PlaceholderAPI.setPlaceholders(
-                        player,
-                        ConfigUtil.langConfig.notFoundGuild
-                    )
-                )
-            )
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
 
-        if (guild.owner == player.name) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isGuildOwner.replace("{prefix}", guild.prefix)))
+        if (guild.isOwner(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isGuildOwner.replace("{prefix}", guild.getPrefix())))
             return
         }
 
-        guild.playerList.remove(player.name)
+        guild.quit(player.name)
     }
 
 
     @Command("guild help")
     @Permission("torosamyguild.help")
-    @CommandDescription("show guild command help")
+    @CommandDescription("显示公会使用帮助")
     fun help(sender: CommandSender) {
-        ConfigUtil.langConfig.commandHelp.forEach { sender.sendMessage(MessageUtil.text(it)) }
+        ConfigUtil.langConfig.commandHelp.forEach {
+            sender.sendMessage(MessageUtil.format(it)) 
+        }
     }
 
     @Command("guild donate <amount>", requiredSender = Player::class)
     @Permission("torosamyguild.donate")
-    @CommandDescription("donate score to guild")
-    fun donateScoreDouble(sender: CommandSender, @Argument("amount") amount: String) {
-        if(amount.toDoubleOrNull() == null) return
+    @CommandDescription("给自己的公会捐赠积分")
+    fun donateScoreDouble(sender: CommandSender, @Argument("amount") amount: Double) {
+        if(amount <= 0) {
+            return
+        }
+        
         val player = sender as Player
-        val guild = GuildManager.getGuildByPlayer(player.name)
+
+        val guild = TorosamyGuildAPI.getGuild(player)
+        
         if (guild == null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.notFoundGuild))
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
 
-        if (TorosamyGuild.economy.getBalance(player) < amount.toDouble()) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.scoreNoEnough))
+        if (TorosamyGuild.economy.getBalance(player) < amount) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.scoreNoEnough))
+            return
+        }
+        val response = TorosamyGuild.economy.withdrawPlayer(player, amount)
+        
+        if (response.type == EconomyResponse.ResponseType.FAILURE) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.scoreNoEnough))
             return
         }
 
-        guild.score += amount.toDouble()
-        guild.playerList[player.name] = guild.playerList[player.name]!! + amount.toDouble()
-        TorosamyGuild.economy.withdrawPlayer(player, amount.toDouble())
-        player.sendMessage(
-            MessageUtil.text(
+        guild.donate(player.name, amount)
+        
+        player.sendMessage(MessageUtil.format(
                 ConfigUtil.langConfig.donateSuccessful
                     .replace("{score}", amount.toString())
-                    .replace("{prefix}", guild.prefix)
-            )
-        )
+                    .replace("{prefix}", guild.getPrefix())
+        ))
     }
 
-
-    @Command("guild info <page>", requiredSender = Player::class)
-    @Permission("torosamyguild.info")
-    @CommandDescription("show guild info")
-    fun showGuildInfo(sender: CommandSender, @Argument("page") page: Int) {
-        val player = sender as Player
-
-        //如果现在的时间 和 上次排序的时间 的间距 大于排序冷却
-        //则重新进行一次排序
-        if (((System.currentTimeMillis() / 1000) - GuildManager.guildRank.first) > ConfigUtil.mainConfig.sortRankCooldown) GuildManager.sortGuilds()
-        val rank: List<Guild> = GuildManager.guildRank.second
-        var truePage = 1
-        if(page > 1) truePage = page
-        val startIndex = (truePage - 1) * ConfigUtil.mainConfig.maxPageShow
-        val endIndex = (startIndex + ConfigUtil.mainConfig.maxPageShow).coerceAtMost(rank.size) // 保证endIndex不超过列表大小
-        // 使用左闭右开的范围
-        for (index in startIndex until endIndex) {
-            val hover = HoverUtil.createCommandHover(
-                MessageUtil.text(rank[index].color.color + rank[index].prefix),
-                "/guild open ${rank[index].prefix}",
-                MessageUtil.text(ConfigUtil.langConfig.clickOpenMenu)
-            )
-            HoverUtil.sendCommandHover(player,hover)
-        }
-    }
-
-
-    @Command("guild open <prefix>", requiredSender = Player::class)
+    @Command("guild open <name>", requiredSender = Player::class)
     @Permission("torosamyguild.open")
-    @CommandDescription("show guild info")
-    fun openGuildGUI(sender: CommandSender, @Argument("prefix") prefix: String) {
-        val guild = GuildManager.getGuildByPrefix(prefix)
+    @CommandDescription("打开公会展示菜单")
+    fun openGuildGUI(sender: CommandSender, @Argument("name") name: String) {
+        val guild = TorosamyGuildAPI.getGuild(name)
+        
         if (guild == null) {
-            sender.sendMessage(MessageUtil.text(ConfigUtil.langConfig.notFoundGuild))
+            sender.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
-
-        val player = sender as Player
-        guild.guildGUI.openGui(player)
+        
+        (sender as Player).openInventory(guild.generateGUI())
     }
 
 
     @Command("guild apply", requiredSender = Player::class)
     @Permission("torosamyguild.apply")
-    @CommandDescription("show all apply about self")
+    @CommandDescription("显示自己所有的加入申请")
     fun showAllApply(sender: CommandSender) {
         val player = sender as Player
 
-        val guild = GuildManager.getGuildByPlayer(player.name)
+        val guild = TorosamyGuildAPI.getGuild(player)
+        
         if (guild != null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.alreadyHasGuild.replace("{prefix}",guild.prefix)))
-            for (value in GuildManager.guilds.values) {
-                value.applyPlayers.remove(player.name)
-            }
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.alreadyHasGuild.replace("{prefix}",guild.getPrefix())))
+            TorosamyGuildAPI.clearApply(player.name)
+            
             return
         }
-
-
-        sender.sendMessage(MessageUtil.text(ConfigUtil.langConfig.applyList))
-        for (guild in GuildManager.guilds.values) {
-            if (guild.applyPlayers.contains(sender.name)) {
-                sender.sendMessage(MessageUtil.text("${guild.color.color}${guild.prefix}"))
-            }
+        
+        sender.sendMessage(MessageUtil.format(ConfigUtil.langConfig.applyList))
+        
+        val guilds = TorosamyGuildAPI.getGuildsApplied(player)
+        
+        for (it in guilds) {
+            sender.sendMessage(MessageUtil.format(it.getPrefix()))
         }
     }
 
-    @Command("guild cancel <prefix>", requiredSender = Player::class)
+    @Command("guild cancel <name>", requiredSender = Player::class)
     @Permission("torosamyguild.cancel")
-    @CommandDescription("cancel join the guild")
-    fun cancelApply(sender: CommandSender, @Argument("prefix") prefix: String) {
+    @CommandDescription("取消加入公会")
+    fun cancelApply(sender: CommandSender, @Argument("name") name: String) {
         val player = sender as Player
 
-        val guild = GuildManager.getGuildByPlayer(player.name)
-        if (guild != null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.alreadyHasGuild))
-            for (value in GuildManager.guilds.values) {
-                value.applyPlayers.remove(player.name)
-            }
+        val playerGuild = TorosamyGuildAPI.getGuild(player)
+
+        if (playerGuild != null) {
+            TorosamyGuildAPI.clearApply(player.name)
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.alreadyHasGuild.replace("{prefix}", playerGuild.getPrefix())))
             return
         }
 
-        val guildByPrefix = GuildManager.getGuildByPrefix(prefix)
-        if (guildByPrefix == null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.notFoundGuild))
+        val guild = TorosamyGuildAPI.getGuild(name)
+
+        if (guild == null) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
 
-        guildByPrefix.applyPlayers.remove(player.name)
-        player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.cancelApplySuccessful.replace("{prefix}", prefix)))
+        if (!guild.applied(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundApply))
+            return
+        }
+
+        if (!guild.removeApply(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundApply))
+            return
+        }
+
+        player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.cancelApplySuccessful.replace("{prefix}", guild.getPrefix())))
     }
+    
+    @Command("guild rank", requiredSender = Player::class)
+    @Permission("torosamyguild.rank")
+    @CommandDescription("显示公会排行榜")
+    fun defaultGuildRank(sender: CommandSender) {
+        guildRank(sender, 1)
+    }
+    
+    @Command("guild rank <page>", requiredSender = Player::class)
+    @Permission("torosamyguild.rank")
+    @CommandDescription("显示公会排行榜")
+    fun guildRank(sender: CommandSender, @Argument("page") page: Int) {
+        val player = sender as Player
 
+        val guilds = TorosamyGuildAPI.updateRank()
+        
+        if (guilds.isEmpty()) {
+            sender.sendMessage(MessageUtil.format(ConfigUtil.langConfig.topUpdating))
+            return
+        }
+        val pageSize = ConfigUtil.mainConfig.maxPageShow
+        
+        val startIndex = TorosamyCoreAPI.getStartIndex(guilds.size, pageSize, page)
 
+        val endIndex = TorosamyCoreAPI.getEndIndex(guilds.size, pageSize, page)
+
+        val totalPage = TorosamyCoreAPI.getTotalPage(guilds.size, pageSize)
+
+        if (page < 1 || page > totalPage || startIndex == -1 || endIndex == -1) {
+            sender.sendMessage(MessageUtil.format(ConfigUtil.langConfig.pageError))
+            return
+        }
+
+        val nextPage = if (page + 1 > totalPage) totalPage else page + 1
+
+        ConfigUtil.langConfig.topHeader.forEach { 
+            sender.sendMessage(MessageUtil.format(it
+                    .replace("%update_time%", MessageUtil.formatTimestamp(TorosamyGuildAPI.getLastUpdateRankTimestamp()))
+                    .replace("%now_page%", page.toString())
+                    .replace("%total_page%", totalPage.toString())
+                    .replace("%next_page%", nextPage.toString())
+                )
+            )
+        }
+
+        for (i in startIndex until endIndex) {
+            if (i >= guilds.size) {
+                break
+            }
+
+            val guild: Guild = guilds[i]
+            
+            val textComponent = HoverUtil.createCommandHover(
+                MessageUtil.format((i + 1).toString() + ". " + guild.getPrefix()),
+                "/guild open " + guild.name,
+                MessageUtil.format(ConfigUtil.langConfig.clickOpenMenu)
+            )
+
+            HoverUtil.sendCommandHover(player, textComponent)
+        }
+
+        ConfigUtil.langConfig.topFooter.forEach {
+            sender.sendMessage(MessageUtil.format(it
+                    .replace("%update_time%", MessageUtil.formatTimestamp(TorosamyGuildAPI.getLastUpdateRankTimestamp()))
+                    .replace("%now_page%", page.toString())
+                    .replace("%total_page%", totalPage.toString())
+                    .replace("%next_page%", nextPage.toString())
+                )
+            )
+        }
+        
+        
+    }
 }

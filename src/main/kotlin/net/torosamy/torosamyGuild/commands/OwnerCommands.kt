@@ -1,10 +1,15 @@
 package net.torosamy.torosamyGuild.commands
 
 
-import net.torosamy.torosamyCore.manager.ConfigManager
+
+import com.bekvon.bukkit.residence.Residence
+import com.bekvon.bukkit.residence.api.ResidenceApi
+import com.bekvon.bukkit.residence.commands.give
+import net.torosamy.torosamyCore.config.Config
+import net.torosamy.torosamyCore.config.ConfigFile
 import net.torosamy.torosamyCore.utils.MessageUtil
 import net.torosamy.torosamyGuild.TorosamyGuild
-import net.torosamy.torosamyGuild.manager.GuildManager
+import net.torosamy.torosamyGuild.api.TorosamyGuildAPI
 import net.torosamy.torosamyGuild.pojo.Guild
 import net.torosamy.torosamyGuild.type.Color
 import net.torosamy.torosamyGuild.utils.ConfigUtil
@@ -18,224 +23,331 @@ import org.incendo.cloud.annotations.CommandDescription
 import org.incendo.cloud.annotations.Permission
 
 class OwnerCommands {
-    @Command("guild create <prefix>", requiredSender = Player::class)
+    @Command("guild create <name>", requiredSender = Player::class)
     @Permission("torosamyguild.create")
-    @CommandDescription("create guild")
-    fun createGuild(sender: CommandSender, @Argument("prefix") prefix: String) {
+    @CommandDescription("创建公会")
+    fun createGuild(sender: CommandSender, @Argument("name") name: String) {
         val player = sender as Player
-        val alreadyGuild = GuildManager.getGuildByPlayer(player.name)
+        
+        val alreadyGuild = TorosamyGuildAPI.getGuild(player)
+        
         if (alreadyGuild != null) {
-            player.sendMessage(
-                MessageUtil.text(ConfigUtil.langConfig.alreadyHasGuild.replace("{prefix}", alreadyGuild.prefix))
-            )
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.alreadyHasGuild.replace("{prefix}", alreadyGuild.getPrefix())))
             return
         }
-        if (prefix.length < ConfigUtil.mainConfig.prefixMinLength) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.prefixTooShort.replace("{prefix}", prefix)))
+        
+        if (name.length < ConfigUtil.mainConfig.prefixMinLength) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.prefixTooShort.replace("{name}", name)))
             return
         }
-        if (prefix.length > ConfigUtil.mainConfig.prefixMaxLength) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.prefixTooLong.replace("{prefix}", prefix)))
+        
+        if (name.length > ConfigUtil.mainConfig.prefixMaxLength) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.prefixTooLong.replace("{name}", name)))
             return
         }
 
 
         val second = player.getStatistic(Statistic.PLAY_ONE_MINUTE) / 20
         val condition = ConfigUtil.mainConfig.createTimeCondition  * 60 * 60
+        
         if(second < condition) {
-            player.sendMessage(MessageUtil.text(
-                ConfigUtil.langConfig.createTimeCondition)
-                .replace("{time}", ConfigUtil.mainConfig.createTimeCondition.toString())
-            )
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.createTimeCondition).replace(
+                "{time}", 
+                ConfigUtil.mainConfig.createTimeCondition.toString()
+            ))
             return
         }
-
-        val defaultColor = Color.valueOf(ConfigUtil.mainConfig.defaultColor)
-        //内存区添加公会
-        val guild = Guild.createGuild(player, prefix, defaultColor)
-
-        GuildManager.addGuild(guild)
-        //IO公会保存
-        val config = Guild.getConfigByGuild(guild)
-        ConfigManager.loadYaml(TorosamyGuild.plugin, "Guilds", "${guild.uuid}.yml",config)
-        //发送消息
-        player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.createSuccessful.replace("{prefix}", prefix)))
+        
+        val guild = Guild(player, name)
+        TorosamyGuildAPI.addGuild(guild)
+        
+        guild.generateConfig().save(
+            ConfigFile(TorosamyGuild.plugin, "${guild.uuid}.yml", listOf("Guilds")).getFile(false)
+        )
+        
+        player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.createSuccessful.replace("{prefix}", guild.getPrefix())))
     }
 
     @Command("guild delete", requiredSender = Player::class)
     @Permission("torosamyguild.delete")
-    @CommandDescription("delete guild")
+    @CommandDescription("解散公会")
     fun deleteGuild(sender: CommandSender) {
-        val guild = GuildManager.isOwner(sender as Player)
+        val player = sender as Player
+
+        val guild = TorosamyGuildAPI.getGuild(player)
+
         if (guild == null) {
-            sender.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildOwner))
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
+
+        if (!guild.isOwner(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isNotGuildOwner))
+            return
+        }
+
         val time: Long = (System.currentTimeMillis() - guild.createTime) / 60000
         val duration: Long = ConfigUtil.mainConfig.deleteGuildCooldown - time
         if (duration > 0) {
-            sender.sendMessage(MessageUtil.text(ConfigUtil.langConfig.deleteCooldown.replace("{duration}",duration.toString())))
+            sender.sendMessage(MessageUtil.format(ConfigUtil.langConfig.deleteCooldown.replace("{duration}",duration.toString())))
             return
         }
-        sender.sendMessage(MessageUtil.text(ConfigUtil.langConfig.deleteSuccessful).replace("{prefix}",guild.prefix))
+        sender.sendMessage(MessageUtil.format(ConfigUtil.langConfig.deleteSuccessful).replace("{prefix}",guild.getPrefix()))
+
         guild.enabled = false
-        guild.saveConfig()
-        GuildManager.deleteGuild(guild)
+        TorosamyGuildAPI.deleteGuild(guild)
     }
 
     @Command("guild accept <player>", requiredSender = Player::class)
     @Permission("torosamyguild.accept")
-    @CommandDescription("accept player`s apply")
+    @CommandDescription("同意玩家的加入申请")
     fun acceptApply(sender: CommandSender, @Argument("player") applyPlayer: String) {
         val player = sender as Player
-        val guild = GuildManager.isOwner(player)
+        
+        if (player.name == applyPlayer) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.interactionSelfError))
+            return
+        }
+        
+        val guild = TorosamyGuildAPI.getGuild(player)
+
         if (guild == null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildOwner))
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
 
-        if (!guild.applyPlayers.contains(applyPlayer)) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.notFoundApply))
+        if (!guild.isOwner(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isNotGuildOwner))
+            return
+        }
+        
+
+        if (!guild.applied(applyPlayer)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundApply))
             return
         }
 
-        GuildManager.deleteApplyByPlayer(applyPlayer)
-        guild.playerList[applyPlayer] = 0.0
-        player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.acceptApply.replace("{player}",applyPlayer)))
+        TorosamyGuildAPI.clearApply(applyPlayer)
+
+        if (!guild.join(applyPlayer)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.alreadyHasGuild.replace("{prefix}",guild.getPrefix())))
+            TorosamyGuildAPI.clearApply(player.name)
+
+            return
+        }
+        
+        player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.acceptApply.replace("{player}",applyPlayer)))
+
+        val member = Bukkit.getPlayer(applyPlayer)
+        if (member != null && member.isOnline) {
+            member.sendMessage(MessageUtil.format(ConfigUtil.langConfig.acceptApply.replace("{player}",applyPlayer)))
+        }
     }
 
     @Command("guild deny <player>", requiredSender = Player::class)
     @Permission("torosamyguild.deny")
-    @CommandDescription("deny player`s apply")
+    @CommandDescription("拒绝玩家的加入申请")
     fun denyApply(sender: CommandSender, @Argument("player") applyPlayer: String) {
         val player = sender as Player
-        val guild = GuildManager.isOwner(player)
+
+        if (player.name == applyPlayer) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.interactionSelfError))
+            return
+        }
+        
+        val guild = TorosamyGuildAPI.getGuild(player)
+
         if (guild == null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildOwner))
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
 
-        if (!guild.applyPlayers.contains(applyPlayer)) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.notFoundApply))
+        if (!guild.isOwner(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isNotGuildOwner))
             return
         }
 
-        guild.applyPlayers.remove(applyPlayer)
-        player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.denyApply.replace("{player}",applyPlayer)))
+
+        if (!guild.applied(applyPlayer)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundApply))
+            return
+        }
+
+        guild.removeApply(player.name)
+        
+        player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.denyApply.replace("{player}",applyPlayer)))
+
+        val member = Bukkit.getPlayer(applyPlayer)
+        if (member != null && member.isOnline) {
+            member.sendMessage(MessageUtil.format(ConfigUtil.langConfig.denyApply.replace("{player}",applyPlayer)))
+        }
     }
 
-    @Command("guild give <player>", requiredSender = Player::class)
+    @Command("guild give <player>")
     @Permission("torosamyguild.give")
-    @CommandDescription("give guild to member")
-    fun giveGuild(sender: CommandSender, @Argument("player") player: String) {
-        val owner = sender as Player
-        val guild = GuildManager.isOwner(owner)
+    @CommandDescription("将公会转让给一名成员")
+    fun giveGuild(player: Player, @Argument("player") memberName: String) {
+        if (player.name == memberName) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.interactionSelfError))
+            return
+        }
+        
+        val guild = TorosamyGuildAPI.getGuild(player)
+
         if (guild == null) {
-            owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildOwner))
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
 
-        if (!guild.playerList.contains(player)) {
-            owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildMember.replace("{player}", player)))
+        if (!guild.isOwner(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isNotGuildOwner))
             return
         }
-        guild.playerList.remove(player)
-        guild.playerList[owner.name] = 0.0
+        
+        if (!guild.isMember(memberName)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isNotGuildMember.replace("{player}", memberName)))
+            return
+        }
 
-        Bukkit.dispatchCommand(TorosamyGuild.plugin.server.consoleSender,"resadmin pset ${owner.name} ${owner.name} admin false")
-        guild.owner = player
-        Bukkit.dispatchCommand(TorosamyGuild.plugin.server.consoleSender,"resadmin pset ${player} ${player} admin true")
-        owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.giveGuildSuccessful))
+
+        if (!guild.give(player, memberName)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.giveResFail))
+            return
+        }
+        
+        player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.giveGuildSuccessful))
     }
 
-    @Command("guild rename <prefix>", requiredSender = Player::class)
+    @Command("guild rename <name>", requiredSender = Player::class)
     @Permission("torosamyguild.rename")
-    @CommandDescription("rename guild`s prefix")
-    fun renameGuild(sender: CommandSender, @Argument("prefix") prefix: String) {
+    @CommandDescription("修改公会的名字")
+    fun renameGuild(sender: CommandSender, @Argument("name") name: String) {
         val player = sender as Player
-        val guild = GuildManager.isOwner(player)
+        
+        val guild = TorosamyGuildAPI.getGuild(player)
+
         if (guild == null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildOwner))
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
 
-        if (prefix.length < ConfigUtil.mainConfig.prefixMinLength) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.prefixTooShort.replace("{prefix}", prefix)))
-            return
-        }
-        if (prefix.length > ConfigUtil.mainConfig.prefixMaxLength) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.prefixTooLong.replace("{prefix}", prefix)))
+        if (!guild.isOwner(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isNotGuildOwner))
             return
         }
 
-
-        player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.renameSuccessful
-            .replace("{prefix}", guild.prefix)
-            .replace("{new_prefix}",prefix)
+        if (name.length < ConfigUtil.mainConfig.prefixMinLength) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.prefixTooShort.replace("{name}", name)))
+            return
+        }
+        if (name.length > ConfigUtil.mainConfig.prefixMaxLength) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.prefixTooLong.replace("{name}", name)))
+            return
+        }
+        
+        val oldPrefix = guild.getPrefix()
+        
+        guild.name = name
+        val newPrefix = guild.getPrefix()
+        
+        player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.renameSuccessful
+            .replace("{prefix}", oldPrefix)
+            .replace("{new_prefix}", newPrefix)
         ))
-        guild.prefix = prefix
     }
 
     @Command("guild color <color>", requiredSender = Player::class)
     @Permission("torosamyguild.color")
-    @CommandDescription("change guild`s color")
+    @CommandDescription("修改公会头衔颜色")
     fun changeGuildColor(sender: CommandSender, @Argument("color") colorCode: String) {
         val player = sender as Player
-        val guild = GuildManager.isOwner(player)
+
+        val guild = TorosamyGuildAPI.getGuild(player)
+
         if (guild == null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildOwner))
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
 
-        if (colorCode !in enumValues<Color>().map { it.name }) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.colorNotFound))
+        if (!guild.isOwner(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isNotGuildOwner))
             return
         }
+        
+        if (colorCode !in enumValues<Color>().map { it.name }) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.colorNotFound))
+            return
+        }
+        
         val color = Color.valueOf(colorCode)
         guild.color = color
-
-
-        player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.changeColorSuccessful.replace("{prefix}", guild.prefix)))
+        
+        player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.changeColorSuccessful.replace("{prefix}", guild.getPrefix())))
     }
 
 
     @Command("guild kick <player>", requiredSender = Player::class)
     @Permission("torosamyguild.kick")
-    @CommandDescription("kick a player")
-    fun kickPlayer(sender: CommandSender, @Argument("player") player: String) {
-        val owner = sender as Player
-        val guild = GuildManager.isOwner(owner)
+    @CommandDescription("将玩家踢出公会")
+    fun kickPlayer(sender: CommandSender, @Argument("player") memberName: String) {
+        val player = sender as Player
+
+        if (player.name == memberName) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.interactionSelfError))
+            return
+        }
+
+        val guild = TorosamyGuildAPI.getGuild(player)
+
         if (guild == null) {
-            owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildOwner))
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
 
-        if (!guild.playerList.contains(player)) {
-            owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildMember.replace("{player}", player)))
+        if (!guild.isOwner(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isNotGuildOwner))
             return
         }
 
-        guild.playerList.remove(player)
-        owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.kickSuccessful.replace("{player}", player)))
+        if (!guild.isMember(memberName)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isNotGuildMember.replace("{player}", memberName)))
+            return
+        }
+
+        guild.quit(memberName)
+        player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.kickSuccessful.replace("{player}", memberName)))
     }
 
 
     @Command("guild check", requiredSender = Player::class)
     @Permission("torosamyguild.check")
-    @CommandDescription("check apply")
+    @CommandDescription("查看所有想要加入公会的玩家")
     fun checkApply(sender: CommandSender) {
-        val owner = sender as Player
-        val guild = GuildManager.isOwner(owner)
+        val player = sender as Player
+        
+        val guild = TorosamyGuildAPI.getGuild(player)
+
         if (guild == null) {
-            owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildOwner))
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
 
-        if (guild.applyPlayers.size == 0) {
-            owner.sendMessage(MessageUtil.text(ConfigUtil.langConfig.noApplyToShow))
+        if (!guild.isOwner(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isNotGuildOwner))
             return
         }
-        sender.sendMessage(MessageUtil.text(ConfigUtil.langConfig.applyList))
-        guild.applyPlayers.forEach { player -> owner.sendMessage(" - $player")}
+        
+        val applies = guild.lookApplies()
+        
+        if (applies.isEmpty()) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.noApplyToShow))
+            return
+        }
+
+        player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.applyList))
+        
+        applies.forEach { 
+            player.sendMessage(" - $it")
+        }
     }
 }

@@ -1,10 +1,10 @@
 package net.torosamy.torosamyGuild.utils
 
-import net.torosamy.torosamyGuild.papi.GuildPrefix
+import net.torosamy.torosamyGuild.papi.TorosamyGuildHolder
 
 class PapiUtil {
     companion object {
-        val guildPrefixPapi = GuildPrefix()
+        val torosamyGuildHolderPapi = TorosamyGuildHolder()
 
         fun reload() {
             unregister()
@@ -12,11 +12,11 @@ class PapiUtil {
         }
 
         fun register() {
-            guildPrefixPapi.register()
+            torosamyGuildHolderPapi.register()
         }
 
         fun unregister() {
-            guildPrefixPapi.unregister()
+            torosamyGuildHolderPapi.unregister()
         }
     }
 }

@@ -1,70 +1,87 @@
-default-prefix: "&7&l暂无公会"
-reload-message: "&b[服务器娘]&a插件 &eTorosamyGuild &a重载成功喵~"
-already-has-guild: "&b[服务器娘]&c您目前隶属于公会 &e{prefix} &c无法进行此操作"
-prefix-too-long: "&b[服务器娘]&c公会名 &e{prefix} &c过长"
-prefix-too-short: "&b[服务器娘]&c公会名 &e{prefix} &c过短"
-create-successful: "&b[服务器娘]&a公会 &e{prefix} &a创建成功!"
-is-not-guild-owner: "&b[服务器娘]&a您不是任何一个公会的会长"
-delete-cooldown: "&b[服务器娘]&c自公会创建后还需 &e{duration} &c分钟才能进行此操作"
-delete-successful: "&b[服务器娘]&a公会 &e{prefix} &a被您成功解散"
-not-found-guild: "&b[服务器娘]&c尚未查询到相应的公会"
-apply-repeat: "&b[服务器娘]&c请勿重复申请加入公会"
-apply-successful: "&b[服务器娘]&a成功向公会 &e{prefix} &a提交加入申请"
-not-found-apply: "&b[服务器娘]&c尚未查询到相应的申请"
-accept-apply: "&b[服务器娘]&a已同意玩家 &e{player} &a加入公会"
-deny-apply: "&b[服务器娘]&c已拒绝玩家 &e{player} &c加入公会"
-is-guild-owner: "&b[服务器娘]&c您目前负责公会 &e{prefix} &c无法进行此操作"
-is-not-guild-member: "&b[服务器娘]&c玩家 &e{player} &c必须是公会成员"
-give-guild-successful: "&b[服务器娘]&a公会转让成功"
-rename-successful: "&b[服务器娘]&a公会 &e{prefix} &a成功更名为 &e{new_prefix}"
-change-color-successful: "&b[服务器娘]&a公会 &e{prefix} &a成功更换颜色"
+reload-message: '&b[服务器娘]&a插件 &eTorosamyGuild &a重载成功喵~'
+already-has-guild: '&b[服务器娘]&c您目前隶属于公会 &e{prefix} &c无法进行此操作'
+prefix-too-long: '&b[服务器娘]&c公会名 &e{name} &c过长'
+prefix-too-short: '&b[服务器娘]&c公会名 &e{name} &c过短'
+create-successful: '&b[服务器娘]&a公会 &e{prefix} &a创建成功!'
+is-not-guild-owner: '&b[服务器娘]&a您不是任何一个公会的会长'
+delete-cooldown: '&b[服务器娘]&c自公会创建后还需 &e{duration} &c分钟才能进行此操作'
+delete-successful: '&b[服务器娘]&a公会 &e{prefix} &a被您成功解散'
+not-found-guild: '&b[服务器娘]&c尚未查询到相应的公会'
+apply-repeat: '&b[服务器娘]&c请勿重复申请加入公会'
+apply-successful: '&b[服务器娘]&a成功向公会 &e{prefix} &a提交加入申请'
+amount-error: "&b[服务器娘]&c您输入的数量有问题"
+not-found-apply: '&b[服务器娘]&c尚未查询到相应的申请'
+accept-apply: '&b[服务器娘]&a已同意玩家 &e{player} &a加入公会'
+deny-apply: '&b[服务器娘]&c已拒绝玩家 &e{player} &c加入公会'
+is-guild-owner: '&b[服务器娘]&c您目前负责公会 &e{prefix} &c无法进行此操作'
+is-not-guild-member: '&b[服务器娘]&c玩家 &e{player} &c必须是公会成员'
+give-guild-successful: '&b[服务器娘]&a公会转让成功'
+rename-successful: '&b[服务器娘]&a公会 &e{prefix} &a成功更名为 &e{new_prefix}'
+change-color-successful: '&b[服务器娘]&a公会 &e{prefix} &a成功更换颜色'
+load-guilds-message: '&b[服务器娘]&a插件 &eTorosamyGuild &a成功加载 &e%amount% &a个公会喵~'
+no-res-holder: '&7&l暂无领地'
+interaction-self-error: '&b[服务器娘]&c该操作禁止与自己进行交互'
+expand-remind: "&b[服务器娘]&a原领地尺寸: &e%old%&a, 新领地尺寸: &e%new%&a, 即将消费: &e%cost%"
 command-help:
-  - "&8&m---------------------&6公会指令&8&m---------------------"
-  - "&6/guild create <guild-name>&7 - 创建公会"
-  - "&6/guild delete&7 - 解散公会"
-  - "&6/guild deny <player>&7 - 拒绝入会申请"
-  - "&6/guild accept <player>&7 - 同意入会申请"
-  - "&6/guild give <member>&7 - 转让公会"
-  - "&6/guild rename <new-guild-name>&7 - 更改公会名称"
-  - "&6/guild color <color>&7 - 更改公会颜色"
-  - "&6/guild kick <member>&7 - 移出玩家"
-  - "&6/guild check&7 - 查看申请列表"
-  - "&6/guild join <guild-name>&7 - 申请加入公会"
-  - "&6/guild quit&7 - 退出公会"
-  - "&6/guild help&7 - 指令提示"
-  - "&6/guild donate <amount>&7 - 捐赠资金"
-  - "&6/guild info <page>&7 - 展示所有公会"
-  - "&6/guild open <prefix>&7 - 公会展示"
-  - "&6/guild apply&7 - 查看自己的申请"
-  - "&6/guild cancel <prefix>&7 - 取消申请"
-  - "&6/gres create <res-name>&7 - 创建公会领地"
-  - "&6/gres expand <distance>&7 - 拓展公会领地"
-  - "&8&m-----------------------------------------------------"
-color-not-found: "&b[服务器娘]&c未查找到相应的颜色"
-create-time-condition: "&b[服务器娘]&c您必须在线满 &e{time} &c小时 才可创建公会"
-kick-successful: "&b[服务器娘]&a成功将玩家 &e{player} &a移出公会"
-no-apply-to-show: "&b[服务器娘]&a尚未查询到任何加入申请"
-apply-list: "&e&m----&6申请列表&e&m----"
-score-no-enough: "&b[服务器娘]&c您的剩余积分不足以进行此操作"
-donate-successful: "&b[服务器娘]&a成功向公会 &e{prefix} &a捐赠 &e{score} &a积分"
-click-open-menu: "&a点击打开公会面板"
-cancel-apply-successful: "&b[服务器娘]&a成功取消向公会 &e{prefix} &a发起的加入申请"
-guild-gui-title: "公会信息"
+  - '&8&m                     &6公会指令&8&m                     '
+  - '&6/guild create <guild-name>&7 - 创建公会'
+  - '&6/guild res set <res-name>&7 - 将自己领地设为公会领地'
+  - '&6/guild res create <res-name>&7 - 创建公会领地'
+  - '&6/guild res expand <distance>&7 - 拓展公会领地'
+  - '&6/guild deny <player>&7 - 拒绝入会申请'
+  - '&6/guild accept <player>&7 - 同意入会申请'
+  - '&6/guild give <member>&7 - 转让公会'
+  - '&6/guild rename <new-guild-name>&7 - 更改公会名称'
+  - '&6/guild color <color>&7 - 更改公会颜色'
+  - '&6/guild kick <member>&7 - 移出玩家'
+  - '&6/guild check&7 - 查看申请列表'
+  - '&6/guild join <guild-name>&7 - 申请加入公会'
+  - '&6/guild quit&7 - 退出公会'
+  - '&6/guild help&7 - 指令提示'
+  - '&6/guild donate <amount>&7 - 捐赠资金'
+  - '&6/guild info <page>&7 - 展示所有公会'
+  - '&6/guild open <prefix>&7 - 公会展示'
+  - '&6/guild apply&7 - 查看自己的申请'
+  - '&6/guild cancel <prefix>&7 - 取消申请'
+  - '&8&m                                                    -'
+color-not-found: '&b[服务器娘]&c未查找到相应的颜色'
+create-time-condition: '&b[服务器娘]&c您必须在线满 &e{time} &c小时 才可创建公会'
+kick-successful: '&b[服务器娘]&a成功将玩家 &e{player} &a移出公会'
+no-apply-to-show: '&b[服务器娘]&a尚未查询到任何加入申请'
+apply-list: '&e&m    &6申请列表&e&m    '
+score-no-enough: '&b[服务器娘]&c您的剩余积分不足以进行此操作'
+donate-successful: '&b[服务器娘]&a成功向公会 &e{prefix} &a捐赠 &e{score} &a积分'
+click-open-menu: '&a点击打开公会面板'
+cancel-apply-successful: '&b[服务器娘]&a成功取消向公会 &e{prefix} &a发起的加入申请'
+guild-gui-title: 公会信息
 guild-basic-info:
-  - '&6&m----------------'
+  - '&6&m                '
   - '&6 ▪ &6&l会名&f:{prefix}'
   - '&6 ▪ &6&l会长&f:&e{owner}'
   - '&6 ▪ &6&l等级&f:&e{level}'
   - '&6 ▪ &6&l积分&f:&e{score}'
   - '&6 ▪ &6&l领地&f:&e{res}'
-  - '&6&m----------------'
+  - '&6&m                '
   - '&6&l[Click]&e&l左键参观'
-  - '&6&m----------------'
-basic-info-display: "&6基本信息"
-#guild-visit: "&6点击参观"
-member-donation: "&6成员捐赠"
-not-found-res: "&b[服务器娘]&c尚未查找到相应的领地"
-already-has-res: "&b[服务器娘]&c请勿重复创建公会领地"
-create-res-successful: "&b[服务器娘]&a公会领地创建成功"
-guild-score-no-enough: "&b[服务器娘]&c公会的剩余积分不足以进行此操作"
-expand-res-successful: "&b[服务器娘]&a成功拓展公会领地"
+  - '&6&m                '
+basic-info-display: '&6基本信息'
+# guild-visit: "&6点击参观"
+member-donation: '&6成员捐赠'
+not-found-res: '&b[服务器娘]&c尚未查找到相应的领地'
+already-has-res: '&b[服务器娘]&c请勿重复创建公会领地'
+create-res-successful: '&b[服务器娘]&a公会领地设置成功'
+guild-score-no-enough: '&b[服务器娘]&c公会的剩余积分不足以进行此操作'
+expand-res-successful: '&b[服务器娘]&a成功拓展公会领地'
+
+top-header:
+  - '&6    公会排行榜  第&c%now_page%&6页/共&c%total_page%&6页    '
+  - '&6更新日期: (%update_time%)'
+top-footer:
+  - '&6点击聊天栏中各个公会打开参观面板'
+  - '&6输入&c/guild rank %next_page%&6来阅读下一页'
+top-updating: '&b[服务器娘]&c排行榜数据正在加载中，请稍后再试。'
+page-error: '&b[服务器娘]&c抱歉 您输入的页码有误'
+guild-create-fail: "&b[服务器娘]&c已存在同名领地或者该区域已存在其他领地"
+auto-remove-res: "&b[服务器娘]&c公会领地因不合法而被重置"
+res-not-select: "&b[服务器娘]&c您还没选择领地大小"
+give-res-fail: "&b[服务器娘]&c因未知原因公会领地转赠失败"

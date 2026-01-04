@@ -1,11 +1,10 @@
 package net.torosamy.torosamyGuild.config;
-import com.bekvon.bukkit.residence.commands.info;
-import com.bekvon.bukkit.residence.commands.show;
-import net.torosamy.torosamyCore.config.TorosamyConfig;
+import net.torosamy.torosamyCore.config.IConfigManage;
+
+import java.util.List;
 
 
-public class MainConfig extends TorosamyConfig {
-    public String defaultColor;
+public class MainConfig implements IConfigManage {
     public int prefixMaxLength;
     public int prefixMinLength;
     public int deleteGuildCooldown;
@@ -15,11 +14,11 @@ public class MainConfig extends TorosamyConfig {
     public Double resCostBlock;
     public String guiBasicInfoItem;
 
-//    public String guiVisitItem;
+    public String noGuildHolder;
 
     public String memberDonationItem;
     public Database database = new Database();
-    public class Database extends TorosamyConfig {
+    public class Database implements IConfigManage {
         public Boolean enabled;
         public String host;
         public String port;
@@ -29,9 +28,13 @@ public class MainConfig extends TorosamyConfig {
     }
 
     public AutoSave autoSave = new AutoSave();
-    public class AutoSave extends TorosamyConfig {
+    public class AutoSave implements IConfigManage {
         public boolean enabled;
         public int minutes;
     }
     public GuildConfig defaultGuildConfig = new GuildConfig();
+    public class GuildConfig implements IConfigManage {
+        public Double score;
+        public String color;
+    }
 }

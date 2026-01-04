@@ -1,8 +1,8 @@
-package net.torosamy.torosamyGuild.utils
+package net.torosamy.torosamyGuild.mysql
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import net.torosamy.torosamyGuild.pojo.GuildPlayer
+import net.torosamy.torosamyGuild.utils.ConfigUtil
 import java.sql.PreparedStatement
 
 class SqlUtil {
@@ -21,8 +21,7 @@ class SqlUtil {
             val databaseConfig = HikariConfig()
 
             databaseConfig.driverClassName = "com.mysql.cj.jdbc.Driver"
-            databaseConfig.jdbcUrl =
-                "jdbc:mysql://$host:$port/$database?useUnicode=true&characterEncoding=utf8&useSSL=false"
+            databaseConfig.jdbcUrl = "jdbc:mysql://$host:$port/$database?useUnicode=true&characterEncoding=utf8&useSSL=false"
             databaseConfig.username = username
             databaseConfig.password = password
 

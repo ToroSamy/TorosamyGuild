@@ -1,26 +1,34 @@
 package net.torosamy.torosamyGuild.utils
 
-import net.torosamy.torosamyCore.manager.ConfigManager
+import net.torosamy.torosamyCore.config.Config
+import net.torosamy.torosamyCore.config.ConfigFile
 import net.torosamy.torosamyGuild.TorosamyGuild
 import net.torosamy.torosamyGuild.config.LangConfig
 import net.torosamy.torosamyGuild.config.MainConfig
 
 class ConfigUtil {
     companion object {
-        val mainConfig: MainConfig = MainConfig()
-        val langConfig: LangConfig = LangConfig()
+        private val configs: ArrayList<Config> = ArrayList()
 
-        private val mainConfigManager: ConfigManager = ConfigManager(mainConfig, TorosamyGuild.plugin,"","config.yml")
-        private val langConfigManager: ConfigManager = ConfigManager(langConfig, TorosamyGuild.plugin,"","lang.yml")
+        public var mainConfig: MainConfig = MainConfig()
+        public var langConfig: LangConfig = LangConfig()
+
+        fun initConfig() {
+            configs.clear()
+            configs.add(Config(mainConfig, ConfigFile(TorosamyGuild.plugin,"config.yml")))
+            configs.add(Config(langConfig, ConfigFile(TorosamyGuild.plugin,"lang.yml")))
+        }
 
         fun reloadConfig() {
-            mainConfigManager.load()
-            langConfigManager.load()
+            for (config in configs) {
+                config.load()
+            }
         }
 
         fun saveConfig() {
-            mainConfigManager.save()
-            langConfigManager.save()
+            for (config in configs) {
+                config.save()
+            }
         }
 
     }

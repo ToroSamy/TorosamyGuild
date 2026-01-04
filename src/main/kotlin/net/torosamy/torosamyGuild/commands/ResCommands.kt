@@ -2,14 +2,14 @@ package net.torosamy.torosamyGuild.commands
 
 import com.bekvon.bukkit.residence.Residence
 import com.bekvon.bukkit.residence.api.ResidenceApi
+import com.bekvon.bukkit.residence.commands.expand
+import com.bekvon.bukkit.residence.commands.resadmin
 import com.bekvon.bukkit.residence.protection.ClaimedResidence
 import com.bekvon.bukkit.residence.protection.CuboidArea
 import com.bekvon.bukkit.residence.selection.SelectionManager.Direction
 import net.torosamy.torosamyCore.utils.MessageUtil
-import net.torosamy.torosamyGuild.TorosamyGuild
-import net.torosamy.torosamyGuild.manager.GuildManager
+import net.torosamy.torosamyGuild.api.TorosamyGuildAPI
 import net.torosamy.torosamyGuild.utils.ConfigUtil
-import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.incendo.cloud.annotations.Argument
@@ -17,113 +17,150 @@ import org.incendo.cloud.annotations.Command
 import org.incendo.cloud.annotations.CommandDescription
 import org.incendo.cloud.annotations.Permission
 
+
 class ResCommands {
-    @Command("gres create <name>", requiredSender = Player::class)
+    @Command("guild res create <name>", requiredSender = Player::class)
     @Permission("torosamyguild.res.create")
-    @CommandDescription("create guild res")
+    @CommandDescription("创建公会领地")
     fun createRes(sender: CommandSender, @Argument("name") name: String)  {
         val player = sender as Player
-        val guild = GuildManager.isOwner(player)
-        if (guild == null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildOwner))
-            return
-        }
 
-        if (guild.residence.isNotEmpty()) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.alreadyHasRes))
+        val guild = TorosamyGuildAPI.getGuild(player)
+
+        if (guild == null) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundGuild))
             return
         }
-        val cuboidArea = Residence.getInstance().selectionManager.getSelectionCuboid(player)
+        
+        if (!guild.isOwner(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isNotGuildOwner))
+            return
+        }
+        
+
+        if (guild.hasResidence()) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.alreadyHasRes))
+            return
+        }
+        
+        val cuboidArea = Residence.getInstance().selectionManager.getSelectionCuboid(player) 
+        
+        if (cuboidArea == null || cuboidArea.lowLocation == null || cuboidArea.highLocation == null ||
+            Residence.getInstance().selectionManager.getPlayerLoc1(player) == null ||
+            Residence.getInstance().selectionManager.getPlayerLoc2(player) == null) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.resNotSelect));
+            return
+        }
+            
+        
         val cost = cuboidArea.size * ConfigUtil.mainConfig.resCostBlock
 
         if (guild.score < cost) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.guildScoreNoEnough))
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.guildScoreNoEnough))
+            return
+        }
+        
+        if (!Residence.getInstance().residenceManager.addResidence(player, name, true)) {
+            return
+        }
+        
+        val residence = ResidenceApi.getResidenceManager().getByName(name)
+        
+        if (residence == null) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.guildCreateFail));
             return
         }
 
-
-        if(!player.isOp) {
-            player.isOp = true
-            Bukkit.dispatchCommand(player,"resadmin create ${name}")
-            Bukkit.dispatchCommand(player,"resadmin server ${name}")
-            player.isOp = false
-        }else {
-            Bukkit.dispatchCommand(player,"resadmin create ${name}")
-            Bukkit.dispatchCommand(player,"resadmin server ${name}")
-        }
-        Bukkit.dispatchCommand(TorosamyGuild.plugin.server.consoleSender,"resadmin pset ${name} ${player.name} admin true")
+        
         guild.score -= cost
         guild.residence = name
-        player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.createResSuccessful))
+        guild.save()
+        player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.createResSuccessful))
     }
+    @Command("guild res set <name>")
+    @Permission("torosamyguild.res.set")
+    @CommandDescription("将自己的一个领地设为公会领地")
+    fun setRes(player: Player, @Argument("name") name: String) {
+        val guild = TorosamyGuildAPI.getGuild(player)
 
-    @Command("gres expand <distance>", requiredSender = Player::class)
-    @Permission("torosamyguild.res.expand")
-    @CommandDescription("expand guild res")
-    fun expandRes(sender: CommandSender, @Argument("distance") distance: String)  {
-        val player = sender as Player
-        val guild = GuildManager.isOwner(player)
-        if (guild == null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.isNotGuildOwner))
+        if (guild == null || !guild.isOwner(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isNotGuildOwner))
+            return
+        }
+        
+        val residence = Residence.getInstance().residenceManager.getByName(name)
+        
+        if (residence == null) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundRes))
             return
         }
 
-        if (guild.residence.isEmpty()) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.notFoundRes))
+        if (!residence.isOwner(player)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundRes))
+            return
+        }
+        
+        guild.residence = name
+        player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.createResSuccessful))
+    }
+
+    @Command("guild res expand <distance>")
+    @Permission("torosamyguild.res.expand")
+    @CommandDescription("扩展公会")
+    fun expandRes(player: Player, @Argument("distance") distance: Int)  {
+        if (distance <= 0) {
+            player.sendMessage(MessageUtil.component(ConfigUtil.langConfig.amountError))
+            return
+        }
+        
+        val guild = TorosamyGuildAPI.getGuild(player)
+
+        if (guild == null || !guild.isOwner(player.name)) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.isNotGuildOwner))
+            return
+        }
+
+        if (!guild.hasResidence()) {
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundRes))
             return
         }
 
         val residence: ClaimedResidence? = ResidenceApi.getResidenceManager().getByLoc(player.location)
         if(residence == null) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.notFoundRes))
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.notFoundRes))
             return
         }
         val area: CuboidArea = residence.mainArea
-        val cost:Double = when (getDirection(player)) {
-            Direction.UP,Direction.DOWN -> area.highVector.blockX * area.highVector.blockZ * ConfigUtil.mainConfig.resCostBlock
-            Direction.PLUSX, Direction.MINUSX -> area.highVector.blockZ * area.highVector.blockY * ConfigUtil.mainConfig.resCostBlock
-            Direction.PLUSZ, Direction.MINUSZ -> area.highVector.blockX * area.highVector.blockY * ConfigUtil.mainConfig.resCostBlock
-            null -> 0.0
-        }
 
+        Residence.getInstance().selectionManager.placeLoc1(player, area.highLocation, false);
+        Residence.getInstance().selectionManager.placeLoc2(player, area.lowLocation, false);
+
+        val oldSize = Residence.getInstance().selectionManager.getSelection(player).baseArea.size
+        
+        Residence.getInstance().selectionManager.modify(player, false, distance)
+
+        val newSize = Residence.getInstance().selectionManager.getSelection(player).baseArea.size
+
+        val cost = (newSize - oldSize) * ConfigUtil.mainConfig.resCostBlock
+        
+        player.sendMessage(MessageUtil.component(ConfigUtil.langConfig.expandRemind
+            .replace("%old%", oldSize.toString())
+            .replace("%new%", newSize.toString())
+            .replace("%cost%", cost.toString())
+        ))
+        
+        
         if(guild.score < cost) {
-            player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.guildScoreNoEnough))
+            player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.guildScoreNoEnough))
             return
         }
 
-        if(!player.isOp) {
-            player.isOp = true
-            Bukkit.dispatchCommand(player,"resadmin expand ${distance}")
-            player.isOp = false
-        } else Bukkit.dispatchCommand(player,"resadmin expand ${distance}")
-        guild.score -= cost
-        player.sendMessage(MessageUtil.text(ConfigUtil.langConfig.expandResSuccessful))
-    }
-    companion object{
-        private fun getDirection(player: Player): Direction? {
-            var yaw = player.location.yaw.toInt()
-            if (yaw < 0) {
-                yaw += 360
-            }
-
-            yaw += 45
-            yaw %= 360
-            val facing = yaw / 90
-            val pitch = player.location.pitch
-            return if (pitch < -50.0f) {
-                Direction.UP
-            } else if (pitch > 50.0f) {
-                Direction.DOWN
-            } else if (facing == 1) {
-                Direction.MINUSX
-            } else if (facing == 3) {
-                Direction.PLUSX
-            } else if (facing == 2) {
-                Direction.MINUSZ
-            } else {
-                if (facing == 0) Direction.PLUSZ else null
-            }
+        if (!expand().perform(Residence.getInstance(), player, arrayOf(distance.toString()), true)) {
+            return
         }
-    }
 
+
+        guild.score -= cost
+        player.sendMessage(MessageUtil.format(ConfigUtil.langConfig.expandResSuccessful))
+    }
 }
